@@ -1,98 +1,84 @@
-import { Composite, Engine, Render, Bodies, World, Mouse, MouseConstraint } from 'matter-js';
-import { PageQuery } from './page-query';
+import { DOMRenderer } from './dom-renderer';
+import { HTMLMatterBody } from './html-matter-body';
+import { Bounds, Engine, Render, Bodies, World } from 'matter-js';
 
-const worldHeight = window.innerHeight;
-const worldWidth = window.innerWidth;
+import { PageWorld } from './page-world';
 
 const engine = Engine.create();
-engine.world.gravity.y = 0;
+engine.world.gravity.y = 1;
+
+
+
+
 // create a renderer
-var render = Render.create({
-  element: document.querySelector('.debug-element'),
+const render = Render.create(<any>{
+  element: document.querySelector('.matter-debug'),
   engine: engine,
   options: {
-    width: worldWidth,
-    height: worldHeight
+    wireframeBackground: 'transparent',
+    background: 'transparent',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    hasBounds: true,
+    showAngleIndicator: true
   }
 
 });
-
-
-
-
-var ground = Bodies.rectangle(worldWidth/2, worldHeight - 30, worldWidth, 60, { isStatic: true });
-var left = Bodies.rectangle(-30, worldHeight/2, 60, worldHeight, { isStatic: true });
-var right = Bodies.rectangle(worldWidth+30, worldHeight/2, 60, worldHeight, { isStatic: true });
-
-// add all of the bodies to the world
-World.add(engine.world, [ground,left, right]);
-
 // run the engine
 Engine.run(engine);
 
 // run the renderer
 Render.run(render);
 
-const query = new PageQuery({
-  container: document.querySelector('.page-content')
+const page = new PageWorld(engine, render);
+
+const translate = {
+  x: 0,
+  y: 0
+};
+
+
+function bindToPageScroll() {
+  translate.y = (window.pageYOffset);
+  Bounds.shift(render.bounds, translate);
+};
+
+window.addEventListener('mousewheel', bindToPageScroll)
+
+window.addEventListener('DOMContentLoaded', () => {
+  page.setViewportSize(window.innerWidth, window.innerHeight);
+  page.setWorldSize(window.innerWidth, document.body.offsetHeight);
+
+  page.init();
+bindToPageScroll();
+
 })
 
-// add mouse control
-var mouse = Mouse.create(render.body),
-mouseConstraint = MouseConstraint.create(engine, {
-    mouse: mouse,
-    constraint: {
-        stiffness: 0.2,
-        render: {
-            visible: true
-        }
-    }
-});
 
-World.add(engine.world, mouseConstraint);
+const allowedTags = ['p', 'button', 'img','a'];
 
-render.mouse = mouse;
+window.addEventListener('mousedown', event => {
+  const { pageX, pageY } = event;
+  // const body = Bodies.circle(pageX, pageY, 20);
 
-class HTMLRenderer {
-  private frameIndex;
-  constructor(private bodies) {
+  // World.add(engine.world, body)
 
-  }
-  render() {
-    const { world } = engine;
-
-    const bodies = Composite.allBodies(world);
-    const constraints = Composite.allConstraints(world);
-
-    for(let body of bodies) {
-      if(body.reference) {
-        body.reference.update();
-      }
-    }
-
-  }
-
-  run() {
-    const frame = () => {
-      this.render();
-      this.frameIndex = requestAnimationFrame(frame);
-    }
-    frame();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const pageBodies = query.collect();
-  World.add(engine.world, pageBodies);
-
-  const pageRenderer = new HTMLRenderer(pageBodies);
-  // pageRenderer.run();
-
-
-  document.addEventListener('click', event => {
-    console.log('clack')
-    var x = event.clientX, y = event.clientY,
-    elementMouseIsOver = document.elementFromPoint(x, y);
-    console.log(elementMouseIsOver)
+  let elements = document.querySelectorAll( ":hover" );
+  let list = elements = Array.prototype.slice.call(elements);
+  list = list.filter(el => {
+    return allowedTags.indexOf(el.nodeName.toLowerCase()) != -1 &&
+    el.dataset.matterBody === undefined
   });
-});
+
+  const bodies = list.map(el => {
+    let htmlBody = new HTMLMatterBody(el);
+    return htmlBody.body;
+  })
+
+  World.add(engine.world, bodies);
+})
+
+
+
+const domRenderer = new DOMRenderer(engine);
+domRenderer.run();
