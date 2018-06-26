@@ -2,7 +2,8 @@
   "name": "glitch-page-physics",
   "version": "1.0.0",
   "scripts": {
-    "start": "webpack-dev-server --mode development --",
+    "start-local": "webpack-dev-server --mode development --",
+    "start": "webpack-dev-server --inline --hot --host 0.0.0.0 --public $PROJECT_DOMAIN.glitch.me",
     "build": "NODE_ENV=production webpack --mode production"
   },
   "license": "ISC",
