@@ -5,7 +5,7 @@ const worldHeight = window.innerHeight;
 const worldWidth = window.innerWidth;
 
 const engine = Engine.create();
-
+engine.world.gravity.y = 0;
 // create a renderer
 var render = Render.create({
   element: document.querySelector('.debug-element'),
@@ -21,8 +21,8 @@ var render = Render.create({
 
 
 var ground = Bodies.rectangle(worldWidth/2, worldHeight - 30, worldWidth, 60, { isStatic: true });
-var left = Bodies.rectangle(0, worldHeight/2, 60, worldHeight, { isStatic: true });
-var right = Bodies.rectangle(worldWidth-30, worldHeight/2, 60, worldHeight, { isStatic: true });
+var left = Bodies.rectangle(-30, worldHeight/2, 60, worldHeight, { isStatic: true });
+var right = Bodies.rectangle(worldWidth+30, worldHeight/2, 60, worldHeight, { isStatic: true });
 
 // add all of the bodies to the world
 World.add(engine.world, [ground,left, right]);
@@ -34,7 +34,7 @@ Engine.run(engine);
 Render.run(render);
 
 const query = new PageQuery({
-  container: document.querySelector('.svg-content')
+  container: document.querySelector('.page-content')
 })
 
 // add mouse control
@@ -81,9 +81,18 @@ class HTMLRenderer {
   }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const pageBodies = query.collect();
+  World.add(engine.world, pageBodies);
 
-const pageBodies = query.collect();
-World.add(engine.world, pageBodies);
+  const pageRenderer = new HTMLRenderer(pageBodies);
+  // pageRenderer.run();
 
-const pageRenderer = new HTMLRenderer(pageBodies);
-pageRenderer.run();
+
+  document.addEventListener('click', event => {
+    console.log('clack')
+    var x = event.clientX, y = event.clientY,
+    elementMouseIsOver = document.elementFromPoint(x, y);
+    console.log(elementMouseIsOver)
+  });
+});

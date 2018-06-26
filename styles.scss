@@ -1,3 +1,5 @@
+@import "zen";
+
 body {
   margin: 0;
   padding: 0;
@@ -11,4 +13,12 @@ body {
   bottom: 0;
   width: 100%;
   height: 100%;
+}
+
+.debug-element {
+  position: absolute;
+  left: 0;
+  top:0;
+  z-index: -1;
+  opacity: 0.5;
 }
