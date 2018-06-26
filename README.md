@@ -1,2 +1,2 @@
-## Webpack + TS
-My minimal starter kit before doing it over and over again.
+## DOM physics
+Click any DOM element to make it part of the physics world.

@@ -1,17 +1,18 @@
 import { Mouse, World, Render, MouseConstraint, Engine, Bodies } from 'matter-js';
+import { HTMLMatterBody } from './html-matter-body';
 
 export class PageWorld {
-  worldHeight: number = 4000;
+  worldHeight: number = 400;
   worldWidth: number = 400;
   viewportWidth: number = 400;
   viewportHeight: number = 400;
   worldBoundsPadding: number = 200;
+  wallBodies:any[];
 
   constructor(
-    private engine: Engine,
-    private renderer: Render
+    private engine: Engine
   ) {
-    this.addMouse();
+    this.init();
   }
 
   setWorldSize(w, h){
@@ -25,8 +26,19 @@ export class PageWorld {
   }
 
   init() {
-    this.createWalls();
+    this.update();
+  }
+
+  update(){
     this.updateBounds();
+    this.updateWalls();
+  }
+
+  resize() {
+    this.setViewportSize(window.innerWidth, window.innerHeight);
+    this.setWorldSize(window.innerWidth, document.body.offsetHeight);
+
+    this.update();
   }
 
   updateBounds () {
@@ -39,24 +51,11 @@ export class PageWorld {
     world.bounds.max.y = this.worldHeight + padding;
   }
 
-  addMouse() {
+  updateWalls() {
+    if(this.wallBodies){
+      World.remove(this.engine.world, this.wallBodies);
+    }
 
-    var mouse = Mouse.create(this.renderer.canvas),
-    mouseConstraint = MouseConstraint.create(this.engine, <any>{
-        mouse: mouse,
-        constraint: {
-            stiffness: 0.2,
-            render: {
-                visible: false
-            }
-        }
-    });
-
-    World.add(this.engine.world, mouseConstraint);
-
-  }
-
-  createWalls() {
     const paddingX = 50;
     const paddingY = 50;
     const wallSize = 50;
@@ -70,7 +69,7 @@ export class PageWorld {
       height: height + wallSize,
       thickness: wallSize
     }
-    const wallBodies = [
+    this.wallBodies = [
       Bodies.rectangle(rect.x, rect.y + rect.height/2, rect.thickness, rect.height, { isStatic: true }),//left
       Bodies.rectangle(rect.x + rect.width/2, rect.y, rect.width, rect.thickness, { isStatic: true }),//top
       Bodies.rectangle(rect.x + rect.width/2, rect.y + rect.height, rect.width, rect.thickness, { isStatic: true }),//bottom
@@ -78,7 +77,22 @@ export class PageWorld {
       // Bodies.rectangle(rect.x + rect.width/2, rect.y + rect.height - rect.thickness/2, rect.width, rect.thickness, { isStatic: true }),//bottom
     ];
 
-    World.add(this.engine.world, wallBodies);
+    World.add(this.engine.world, this.wallBodies);
   }
 
+  createBody(allowedTags) {
+    let elements = document.querySelectorAll( ":hover" );
+    let list = elements = Array.prototype.slice.call(elements);
+    list = list.filter(el => {
+      return allowedTags.indexOf(el.nodeName.toLowerCase()) != -1 &&
+      el.dataset.matterBody === undefined
+    });
+
+    const bodies = list.map(el => {
+      let htmlBody = new HTMLMatterBody(el);
+      return htmlBody.body;
+    })
+
+    World.add(this.engine.world, bodies);
+  }
 }
